@@ -5,74 +5,79 @@ import { useEffect, useState } from 'react';
 import Register from './pages/Register.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import ProtectedRoute from './components/ProtectedRoute.jsx';
-import Navbar from './components/Navbar.jsx';
-import ErrorBoundary from './components/ErrorBoundary.jsx';
+import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './components/Navbar';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if user is authenticated
     const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
+    if (token) {
+      setIsAuthenticated(true);
+    }
+    setLoading(false);
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <ErrorBoundary>
-      <Router>
+    <Router>
+      <div className="min-h-screen bg-gray-50">
         <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
-        <div className="min-h-screen bg-gray-50">
+        <main className="container mx-auto px-4 py-8">
           <Routes>
-            <Route
-              path="/"
-              element={
-                isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
-              }
-            />
-            <Route
-              path="/login"
-              element={
-                isAuthenticated ? (
-                  <Navigate to="/dashboard" replace />
-                ) : (
-                  <Login setIsAuthenticated={setIsAuthenticated} />
-                )
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />
-              }
-            />
+            {/* Public routes */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login" element={
+              isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login setIsAuthenticated={setIsAuthenticated} />
+            } />
+            <Route path="/register" element={
+              isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />
+            } />
+
+            {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
-              <Route 
-                path="/dashboard" 
-                element={
-                  <Dashboard setIsAuthenticated={setIsAuthenticated} />
-                } 
-              />
+              <Route path="/dashboard" element={<Dashboard />} />
+              {/* Add more protected routes here */}
             </Route>
-            <Route
-              path="*"
-              element={
-                <div className="min-h-screen flex flex-col items-center justify-center text-center">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">404</h1>
-                  <p className="text-gray-600 mb-6">Page not found</p>
-                  <button
-                    onClick={() => window.location.href = "/"}
-                    className="px-4 py-2 rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Go Home
-                  </button>
-                </div>
-              }
-            />
+
+            {/* 404 route */}
+            <Route path="*" element={
+              <div className="text-center py-12">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
+                <p className="text-lg text-gray-600">Page not found</p>
+                <Link 
+                  to="/" 
+                  className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Go back home
+                </Link>
+              </div>
+            } />
           </Routes>
-          <ToastContainer position="top-right" autoClose={5000} />
-        </div>
-      </Router>
-    </ErrorBoundary>
+        </main>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+      </div>
+    </Router>
   );
 }
 

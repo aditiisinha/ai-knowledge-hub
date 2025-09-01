@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../api';
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import api from "../api";
+import DocList from "../pages/DocList";
 
 const Dashboard = ({ setIsAuthenticated }) => {
   const [user, setUser] = useState(null);
@@ -10,22 +11,26 @@ const Dashboard = ({ setIsAuthenticated }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await api.get('/auth/me');
+        const response = await api.get("/auth/me", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
         setUser(response.data);
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user data:", error);
+        // If unauthorized, redirect to login
+        navigate("/login");
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");   // clear token
+    localStorage.removeItem("token"); // clear token
     setIsAuthenticated(false);
-    navigate("/login");                 // redirect to login
+    navigate("/login"); // redirect to login
   };
 
   if (loading) {
@@ -35,25 +40,33 @@ const Dashboard = ({ setIsAuthenticated }) => {
   return (
     <div>
       <h1>Dashboard</h1>
-      
+
       {user && (
         <div>
           <h2>Your Profile</h2>
-          <p>Name: {user.username}</p>
-          <p>Email: {user.email}</p>
-          <p>Role: {user.role}</p>
+          <p><strong>Name:</strong> {user.username}</p>
+          <p><strong>Email:</strong> {user.email}</p>
+          <p><strong>Role:</strong> {user.role}</p>
         </div>
       )}
 
       <div>
         <h2>Quick Actions</h2>
-        <button onClick={() => navigate('/documents/new')}>Create Document</button>
-        <button onClick={() => navigate('/documents')}>View Documents</button>
-        <button onClick={() => navigate('/search')}>Search</button>
+        <Link to="/docs/new">
+          <button>Create Document</button>
+        </Link>
+        <Link to="/search">
+          <button>Search</button>
+        </Link>
       </div>
 
+      {/* Show documents list */}
+      <div>
+        <h2>Your Documents</h2>
+        <DocsList />
+      </div>
 
-      {/* 🔴 Logout button here */}
+      {/* Logout */}
       <div>
         <button onClick={handleLogout}>Logout</button>
       </div>
